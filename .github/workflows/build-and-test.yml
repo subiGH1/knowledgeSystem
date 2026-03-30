@@ -1,0 +1,38 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, practice-actions ]
+  pull_request:
+    branches: [ main, practice-actions ]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    # ここに「マトリックス」の設定を追加！
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          # 固定値ではなく、マトリックスの変数を使う
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 langchain-huggingface langchain-chroma google-genai
+          # 必要なライブラリをここに並べる
+
+      - name: Lint and Test
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # テスト実行（3つのバージョンで並列に走ります）
+          python 1.py

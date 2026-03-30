@@ -1,3 +1,4 @@
+import logging  # これを追加！
 def run_query(query: str):
     logging.info("--- 検索と生成を開始します ---")
     try:

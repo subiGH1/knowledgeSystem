@@ -5,38 +5,34 @@ on:
     branches: [ main, practice-actions ]
   pull_request:
     branches: [ main ]
-
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    # ここに「マトリックス」の設定を追加！
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
-      # 1. ビルド（リポジトリの取得とPythonセットアップ）
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          # 固定値ではなく、マトリックスの変数を使う
+          python-version: ${{ matrix.python-version }}
 
-      # 2. チェック（ライブラリのインストールと構文チェック）
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8  # 構文チェック用のツール
+          pip install flake8 langchain-huggingface langchain-chroma google-genai
+          # 必要なライブラリをここに並べる
 
-      - name: Lint with flake8
-        run: |
-          # 致命的な構文エラーがないかチェック
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-
-      # 3. テスト（スクリプトの実行）
-      - name: Run automated tests
+      - name: Lint and Test
         env:
-          # ここで前回の「Secrets」を環境変数として注入！
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          echo "Running RAG application tests..."
-          # 本来は pytest などを使いますが、練習用に簡単なコマンドを実行
-          python -c "import os; print('API Key is set:' if os.getenv('GEMINI_API_KEY') else 'API Key is MISSING')"
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # テスト実行（3つのバージョンで並列に走ります）
+          python 1.py

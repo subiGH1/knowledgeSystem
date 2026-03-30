@@ -1,24 +1,52 @@
-name: Docker CI
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
+  pull_request:
+    branches: [ main, practice-actions ]
 
 jobs:
-  build-and-test:
+  # ジョブ1：テスト（先ほどのマトリックス）
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
     steps:
       - uses: actions/checkout@v4
-
-      # 1. リンター(Ruff)でコードチェック
-      - name: Run Linter
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
         run: |
-          pip install ruff
-          ruff check .
+          pip install flake8 langchain-huggingface langchain-chroma google-genai
+      - name: Run Lint
+        run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
-      # 2. Dockerイメージのビルドテスト
-      - name: Build Docker image
-        run: docker build -t my-rag-app:latest .
+  # ジョブ2：Dockerビルド（テストが成功した時だけ実行）
+  build-docker:
+    needs: test  # testジョブが成功した時だけ動く
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' # mainに合流した時だけビルド
+    permissions:
+      contents: read
+      packages: write
 
-      # 3. (オプション) イメージをレジストリへ保存
-      # ここに Docker Hub や Google Artifact Registry への push 処理を書くのが実務の流れです
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }} # 自動で発行されるトークン
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository }}/rag-app:latest

@@ -1,0 +1,8 @@
+.env.env
+chroma_db/
+__pycache__/
+app.log
+error_log.txt
+answer.txt
+minikube-linux-amd64
+minikube-linux-amd64

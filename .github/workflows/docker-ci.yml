@@ -1,0 +1,24 @@
+name: Docker CI
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1. リンター(Ruff)でコードチェック
+      - name: Run Linter
+        run: |
+          pip install ruff
+          ruff check .
+
+      # 2. Dockerイメージのビルドテスト
+      - name: Build Docker image
+        run: docker build -t my-rag-app:latest .
+
+      # 3. (オプション) イメージをレジストリへ保存
+      # ここに Docker Hub や Google Artifact Registry への push 処理を書くのが実務の流れです

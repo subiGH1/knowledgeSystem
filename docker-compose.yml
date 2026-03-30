@@ -1,0 +1,10 @@
+services:
+  rag-app:
+    build: .
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PYTHONUTF8=1
+      - PYTHONIOENCODING=utf-8
+      - LANG=C.UTF-8
+    volumes:
+      - .:/app

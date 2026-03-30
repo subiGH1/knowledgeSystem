@@ -1,4 +1,8 @@
-import logging  # これを追加！
+import logging
+import traceback
+import pathlib  # 40行目付近の pathlib.Path で必要
+from langchain_huggingface import HuggingFaceEmbeddings # 10行目付近で必要
+from langchain_chroma import Chroma              # 11行目付近で必要
 def run_query(query: str):
     logging.info("--- 検索と生成を開始します ---")
     try:
